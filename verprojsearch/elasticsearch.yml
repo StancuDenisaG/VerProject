@@ -1,0 +1,47 @@
+# Use a descriptive name for your cluster:
+cluster.name: my-application
+
+# Use a descriptive name for the node:
+node.name: node-1
+
+# Path to directory where to store the data (separate multiple locations by comma):
+path.data: /usr/share/elasticsearch/data
+
+# Path to log files:
+path.logs: /usr/share/elasticsearch/logs
+
+# Lock the memory on startup:
+bootstrap.memory_lock: false
+
+
+# Make sure that the heap size is set to about half the memory available
+# on the system and that the owner of the process is allowed to use this
+# limit.
+# Elasticsearch performs poorly when the system is swapping the memory.
+
+# By default Elasticsearch is only accessible on localhost. Set a different
+# address here to expose this node on the network:
+network.host: 0.0.0.0
+
+# Enable security features
+xpack.security.enabled: true
+
+# Create a new cluster with the current node only
+# Additional nodes can still join the cluster later
+cluster.initial_master_nodes: ["node-1"]
+
+# Allow HTTP API connections from anywhere
+# Connections are encrypted and require user authentication
+http.host: 0.0.0.0
+
+# --------------------- DO NOT MODIFY ---------------------
+# xpack.security.enrollment.enabled: true
+# xpack.security.http.ssl:
+#   enabled: true
+#   keystore.path: certs/http.p12
+# xpack.security.transport.ssl:
+#   enabled: true
+#   verification_mode: certificate
+#   keystore.path: certs/transport.p12
+#   truststore.path: certs/transport.p12
+# --------------------- DO NOT MODIFY ---------------------
