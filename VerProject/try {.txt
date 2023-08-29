@@ -1,0 +1,180 @@
+//            try {
+//                WebsiteData websiteData = extractDataFromWebsite(websiteUrl);
+//                if (websiteData != null) {
+//                    // Print extracted data
+//                    System.out.println("Domain: " + websiteData.getDomain());
+//                    System.out.println("Phone Numbers: " + String.join(", ", websiteData.getPhoneNumbers()));
+//                    System.out.println("Social Media Links: " + String.join(", ", websiteData.getSocialMediaLinks()));
+//                    System.out.println("------------------------------------");
+//                }
+//            } catch (MalformedURLException e) {
+//                System.out.println("Invalid URL: " + websiteUrl);
+//                continue; // Skip to the next website URL
+//            }
+
+
+/*    public static void main(String[] args) {
+        List<WebsiteData> websiteDataList = new ArrayList<>();
+
+        int batchStartIndex = Integer.parseInt(System.getenv("BATCH_START_INDEX"));
+        int batchEndIndex = Integer.parseInt(System.getenv("BATCH_END_INDEX"));
+        List<String> websiteUrls = extractWebsiteUrlsFromCsv("sample-websites.csv", batchStartIndex, batchEndIndex);
+
+        for (String websiteUrl : websiteUrls) {
+            if (!websiteUrl.startsWith("http://") && !websiteUrl.startsWith("https://")) {
+                websiteUrl = addHttpProtocol(websiteUrl);
+            }
+
+            System.out.println("Website URL: " + websiteUrl);
+            try {
+                WebsiteData websiteData = extractDataFromWebsite(websiteUrl);
+                if (websiteData != null) {
+                    websiteDataList.add(websiteData);
+                }
+            } catch (MalformedURLException e) {
+                System.out.println("Invalid URL: " + websiteUrl);
+                continue; // Skip to the next website URL
+            }
+            System.out.println("------------------------------------");
+        }
+
+*//*        if (websiteDataList.size() > 0) {
+            writeWebsiteDataToCsv(websiteDataList, "/data/merged-data.csv");
+        }*//*
+    }
+  //  }*/
+
+
+
+
+
+
+
+
+
+
+
+package org.example;
+
+import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvValidationException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Main {
+/*    public static List<List<String>> splitListIntoBatches(List<String> originalList, int batchSize) {
+        List<List<String>> batches = new ArrayList<>();
+        for (int i = 0; i < originalList.size(); i += batchSize) {
+            int endIdx = Math.min(i + batchSize, originalList.size());
+            List<String> batch = originalList.subList(i, endIdx);
+            batches.add(batch);
+        }
+        return batches;
+    }*/
+
+    public static void main(String[] args) throws MalformedURLException {
+        int batchStartIndex = Integer.parseInt(System.getenv("BATCH_START_INDEX"));
+        int batchEndIndex = Integer.parseInt(System.getenv("BATCH_END_INDEX"));
+        List<String> websiteUrls = extractWebsiteUrlsFromCsv("sample-websites.csv", batchStartIndex, batchEndIndex);
+
+        for (String websiteUrl : websiteUrls) {
+            if (!websiteUrl.startsWith("http://") && !websiteUrl.startsWith("https://")) {
+                websiteUrl = addHttpProtocol(websiteUrl);
+            }
+
+            System.out.println("Website URL: " + websiteUrl);
+            extractDataFromWebsite(websiteUrl);
+
+        }
+    }
+
+
+    private static String addHttpProtocol(String url) {
+        return "http://" + url;
+    }
+
+    private static List<String> extractWebsiteUrlsFromCsv(String csvFilePath, int startIndex, int endIndex) {
+        List<String> websiteUrls = new ArrayList<>();
+        try (CSVReader reader = new CSVReader(new FileReader(csvFilePath))) {
+            String[] nextLine;
+            int currentRow = 0; // Track the current row index
+            while ((nextLine = reader.readNext()) != null) {
+                if (currentRow >= startIndex && currentRow <= endIndex) {
+                    String websiteUrl = nextLine[0]; // Assuming the URL is in the first column
+                    websiteUrls.add(websiteUrl);
+                }
+                currentRow++;
+                if (currentRow > endIndex) {
+                    break; // Exit loop after reaching endIndex
+                }
+            }
+        } catch (IOException | CsvValidationException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+
+        return websiteUrls;
+    }
+
+
+    private static void extractDataFromWebsite(String websiteUrl) throws MalformedURLException {
+        try {
+            Document doc = Jsoup.connect(websiteUrl).get();
+            WebsiteData websiteData = new WebsiteData();
+
+            // Extract phone numbers
+            Elements phoneElements = doc.select("a[href^=tel:]");
+            for (Element phoneElement : phoneElements) {
+                String phoneNumber = phoneElement.attr("href").replaceAll("tel:", "");
+                //websiteData.addPhoneNumber(phoneNumber);
+                System.out.println("Phone number: " + phoneNumber);
+            }
+
+            // Extract social media links
+            Elements socialMediaElements = doc.select("a[href*=facebook.com], a[href*=twitter.com], a[href*=instagram.com]");
+            for (Element socialMediaElement : socialMediaElements) {
+                String socialMediaLink = socialMediaElement.attr("href");
+               // websiteData.addSocialMediaLink(socialMediaLink);
+                System.out.println("Social Media: " + socialMediaLink);
+            }
+            websiteData.setDomain(websiteUrl);
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void writeWebsiteDataToCsv(List<WebsiteData> websiteDataList, String csvFilePath) {
+        try (CSVWriter writer = new CSVWriter(new FileWriter(csvFilePath))) {
+            // Write the header
+            String[] header = {"Domain", "Phone Numbers", "Social Media Links"};
+            writer.writeNext(header);
+
+            // Write the data
+            for (WebsiteData websiteData : websiteDataList) {
+                String domain = websiteData.getDomain();
+                List<String> phoneNumbers = websiteData.getPhoneNumbers();
+                List<String> socialMediaLinks = websiteData.getSocialMediaLinks();
+
+                // Convert lists to strings
+                String phoneNumberString = String.join(", ", phoneNumbers);
+                String socialMediaLinkString = String.join(", ", socialMediaLinks);
+
+                writer.writeNext(new String[]{domain, phoneNumberString, socialMediaLinkString});
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}

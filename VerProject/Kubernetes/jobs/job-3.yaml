@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-item-3
+  labels:
+    jobgroup: job
+spec:
+  template:
+    metadata:
+      name: web-info-pod
+    spec:
+      containers:
+        - name: web-info-container
+          image: verproj:v10
+          imagePullPolicy: Never
+          env:
+            - name: CSV_FILE_PATH
+              value: "VerProject/sample-websites.csv"
+            - name: BATCH_START_INDEX
+              value: "303"
+            - name: BATCH_END_INDEX
+              value: "402"
+      restartPolicy: Never

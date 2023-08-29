@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-item-$ITEM # Use loop index to create unique names
+  labels:
+    jobgroup: job
+spec:
+  template:
+    metadata:
+      name: web-info-pod
+    spec:
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: csv-pvc # Use the name of your PVC
+      containers:
+        - name: web-info-container
+          image: verproj:latest
+          imagePullPolicy: Never #
+          env:
+            - name: CSV_FILE_PATH
+              value: "VeridifoneProject/sample-websites.csv"
+            - name: BATCH_START_INDEX
+              value: "<REPLACE_WITH_START_INDEX>"
+            - name: BATCH_END_INDEX
+              value: "<REPLACE_WITH_END_INDEX>"
+          volumeMounts:
+            - name: data-volume
+              mountPath: "/data"
+      restartPolicy: Never
